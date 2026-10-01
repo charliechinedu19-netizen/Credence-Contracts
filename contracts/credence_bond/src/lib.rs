@@ -16,8 +16,12 @@ extern crate std;
 // the production build.
 pub mod access_control;
 
+// `batch` and its re-export must both be ungated. `#[contractimpl]` strips
+// `#[cfg(test)]` from the entrypoints it wraps, so gating only the re-export
+// leaves the generated `__create_batch_bonds` / `__validate_batch_bonds` /
+// `__get_batch_total_amount` symbols with no module to resolve against:
+// `error[E0433]: failed to resolve: use of unresolved module or unlinked crate`.
 mod batch;
-#[cfg(test)]
 pub use batch::{BatchBondParams, BatchBondResult};
 mod claims;
 mod cooldown;
@@ -25,7 +29,11 @@ mod early_exit_penalty;
 pub mod emergency;
 mod emergency_drain;
 mod events;
-mod fees;
+// `pub` so the integration tests in `tests/fees_*.rs` can reach the
+// governance bounds and the (currently dormant) fee arithmetic helpers
+// directly. `autotests = false` and the crate's `#[cfg(test)]` build is
+// independently broken, so anything testing `fees.rs` has to live in `tests/`.
+pub mod fees;
 mod guards;
 mod idempotency;
 mod invariants;
@@ -36,7 +44,12 @@ mod math;
 mod migration;
 mod nonce;
 mod normalization;
-mod parameters;
+// `pub` so the integration tests in `tests/parameters_*.rs` can reach the
+// governance validation helpers directly. `autotests = false` keeps the crate
+// from autodiscovering stale test targets, and the `#[cfg(test)]` modules in
+// src/ cannot be run (the crate's test build is independently broken), so the
+// parameters suite has to live in tests/ and needs this path public.
+pub mod parameters;
 mod pausable;
 mod rolling_bond;
 mod safe_token;
@@ -1119,7 +1132,6 @@ impl CredenceBond {
     ///
     /// # Events
     /// Emits `batch_bonds_created` on success.
-    #[cfg(test)]
     pub fn create_batch_bonds(
         e: Env,
         params_list: soroban_sdk::Vec<batch::BatchBondParams>,
@@ -1136,7 +1148,6 @@ impl CredenceBond {
     ///
     /// # Panics
     /// Same panic conditions as [`create_batch_bonds`], minus the duplicate-bond check.
-    #[cfg(test)]
     pub fn validate_batch_bonds(
         e: Env,
         params_list: soroban_sdk::Vec<batch::BatchBondParams>,
@@ -1151,7 +1162,6 @@ impl CredenceBond {
     ///
     /// # Returns
     /// `0` for an empty batch; the arithmetic sum of all `amount` fields otherwise.
-    #[cfg(test)]
     pub fn get_batch_total_amount(
         e: Env,
         params_list: soroban_sdk::Vec<batch::BatchBondParams>,

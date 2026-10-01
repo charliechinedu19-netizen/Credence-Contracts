@@ -243,7 +243,7 @@ pub fn get_batch_total_amount(e: &Env, params_list: &Vec<BatchBondParams>) -> i1
     total
 }
 
-/* [pre-broken on main] #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     use credence_math::SECONDS_PER_DAY;
@@ -276,4 +276,4 @@ mod tests {
         let total = get_batch_total_amount(&env, &params_list);
         assert_eq!(total, 3000);
     }
-} */
+}
